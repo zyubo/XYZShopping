@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="XYZShoppingModel.Store" Alias="Self" Provider="System.Data.SqlClient" ProviderManifestToken="2008" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns="http://schemas.microsoft.com/ado/2009/02/edm/ssdl">
+  <EntityContainer Name="XYZShoppingModelStoreContainer">
+    <EntitySet Name="cart" EntityType="XYZShoppingModel.Store.cart" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="ordered" EntityType="XYZShoppingModel.Store.ordered" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="products" EntityType="XYZShoppingModel.Store.products" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="users" EntityType="XYZShoppingModel.Store.users" store:Type="Tables" Schema="dbo" />
+    <AssociationSet Name="FK_cart_products" Association="XYZShoppingModel.Store.FK_cart_products">
+      <End Role="products" EntitySet="products" />
+      <End Role="cart" EntitySet="cart" />
+    </AssociationSet>
+    <AssociationSet Name="FK_cart_users" Association="XYZShoppingModel.Store.FK_cart_users">
+      <End Role="users" EntitySet="users" />
+      <End Role="cart" EntitySet="cart" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ordered_products" Association="XYZShoppingModel.Store.FK_ordered_products">
+      <End Role="products" EntitySet="products" />
+      <End Role="ordered" EntitySet="ordered" />
+    </AssociationSet>
+    <AssociationSet Name="FK_ordered_users" Association="XYZShoppingModel.Store.FK_ordered_users">
+      <End Role="users" EntitySet="users" />
+      <End Role="ordered" EntitySet="ordered" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="cart">
+    <Key>
+      <PropertyRef Name="email" />
+      <PropertyRef Name="id" />
+    </Key>
+    <Property Name="email" Type="nchar" Nullable="false" MaxLength="10" />
+    <Property Name="id" Type="int" Nullable="false" />
+    <Property Name="pcount" Type="int" Nullable="false" />
+  </EntityType>
+  <EntityType Name="ordered">
+    <Key>
+      <PropertyRef Name="orderid" />
+    </Key>
+    <Property Name="email" Type="nchar" Nullable="false" MaxLength="10" />
+    <Property Name="id" Type="int" Nullable="false" />
+    <Property Name="pcount" Type="int" Nullable="false" />
+    <Property Name="orderid" Type="int" Nullable="false" />
+    <Property Name="address" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="delivered" Type="bit" Nullable="false" />
+    <Property Name="cardnum" Type="real" Nullable="false" />
+    <Property Name="arrive" Type="nchar" Nullable="false" MaxLength="50" />
+    <Property Name="total" Type="float" Nullable="false" />
+  </EntityType>
+  <EntityType Name="products">
+    <Key>
+      <PropertyRef Name="id" />
+    </Key>
+    <Property Name="id" Type="int" Nullable="false" />
+    <Property Name="title" Type="nchar" Nullable="false" MaxLength="10" />
+    <Property Name="available" Type="int" Nullable="false" />
+    <Property Name="price" Type="float" Nullable="false" />
+    <Property Name="image" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="summary" Type="nvarchar(max)" Nullable="false" />
+    <Property Name="details" Type="nvarchar(max)" Nullable="false" />
+  </EntityType>
+  <EntityType Name="users">
+    <Key>
+      <PropertyRef Name="email" />
+    </Key>
+    <Property Name="username" Type="nchar" Nullable="false" MaxLength="10" />
+    <Property Name="email" Type="nchar" Nullable="false" MaxLength="10" />
+    <Property Name="password" Type="nchar" Nullable="false" MaxLength="10" />
+  </EntityType>
+  <Association Name="FK_cart_products">
+    <End Role="products" Type="XYZShoppingModel.Store.products" Multiplicity="1" />
+    <End Role="cart" Type="XYZShoppingModel.Store.cart" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="products">
+        <PropertyRef Name="id" />
+      </Principal>
+      <Dependent Role="cart">
+        <PropertyRef Name="id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_cart_users">
+    <End Role="users" Type="XYZShoppingModel.Store.users" Multiplicity="1" />
+    <End Role="cart" Type="XYZShoppingModel.Store.cart" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="users">
+        <PropertyRef Name="email" />
+      </Principal>
+      <Dependent Role="cart">
+        <PropertyRef Name="email" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ordered_products">
+    <End Role="products" Type="XYZShoppingModel.Store.products" Multiplicity="1" />
+    <End Role="ordered" Type="XYZShoppingModel.Store.ordered" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="products">
+        <PropertyRef Name="id" />
+      </Principal>
+      <Dependent Role="ordered">
+        <PropertyRef Name="id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+  <Association Name="FK_ordered_users">
+    <End Role="users" Type="XYZShoppingModel.Store.users" Multiplicity="1" />
+    <End Role="ordered" Type="XYZShoppingModel.Store.ordered" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="users">
+        <PropertyRef Name="email" />
+      </Principal>
+      <Dependent Role="ordered">
+        <PropertyRef Name="email" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

@@ -1,0 +1,575 @@
+XYZShopping to do list
+
+【BUG待调】
+未登录时在主页点击addCart按钮会出错
+登出后cookie未清理
+表单填写格式验证
+
+【功能完善】
+LINQ to SQL
+AJAX enabled controls 
+jquery work with ASP.NET MVC
+Unit Test
+SSL
+bridge pattern, webcach?
+web security(ie. sql injection)
+Javascript framework Prototype是什么
+http://nerdery.com/jobs/positions/4
+
+【页面规划】
+link login
+	page login
+link logout(instantly logout)
+link register
+	page register
+link account
+	page change password
+link home(view all products)
+	page details(take one premeter from home, view product)
+		button(add cart)
+	button add cart(after each item)
+link cart
+	page view - edit - delete cart, show total price
+		link(checkout) page collect card number & mailing address
+			link(proceed next) page confirm display all order information
+				button confirm(write into database) insertHTML show Thank You! - auto redirect to home
+link checkout
+	page view only, show total price
+		link(checkout) page collect card number & mailing address
+			link(proceed next) page confirm display all order information
+				button confirm(write into database) insertHTML show Thank You! - auto redirect to home
+link order
+	page view all orders status
+link control
+	page view - edit - delete product 
+		link(add product) page add product
+	
+		
+
+【Data how to use】
+register (add to customer)
+login (select from customer if exist?)
+
+show(summary) product (select from product. available count)
+show(detail) product (...)
+add product (add to product)
+Edit product (modify product)
+delete product (delete from product)
+
+add to cart (add to cart)
+delete from cart (delete from cart)
+Check Out(add to ordered. bool delivered or not, Credit card Number ...)
+
+【Tables】
+[users]
+username
+email  - k
+password
+
+[products]
+id - k
+title
+available
+price
+image
+summary
+details
+(How to store image to database and display an image from database)
+
+[cart]
+email - fk
+id - fk
+pcount
+
+[ordered]
+email - fk
+id - fk
+pcount
+delivered
+cardnum
+arrive
+orderid - k
+total
+(make products.available -= ordered.pcount)
+
+登陆：AccountModels, 将email存入session["USER"]
+选货：PurchaseModel, 获取id和num连同session["USER"]，存入cart数据库
+结帐：CheckOutModel, 获取cardnum连同session["USER"]，数据库获取cart，计算总额，存入ordered数据库
+
+
+
+存储过程定义：
+
+【register(username, email, password)】
+USE XYZShopping;
+--DROP PROC dbo.register;
+GO
+CREATE PROC dbo.register
+@username nchar(10), @email nchar(10), @password nchar(10)
+AS
+IF EXISTS ( SELECT * FROM dbo.users
+            WHERE email = @email
+			AND password = @password )
+				UPDATE dbo.users
+				SET username = @username
+				WHERE email = @email
+				AND password = @password;
+ELSE
+	INSERT INTO dbo.users
+	VALUES (
+		@username,
+		@email,
+		@password );
+测试：EXEC XYZShopping.dbo.register 'fff', 'f@m.c', '666';
+EXEC XYZShopping.dbo.register 'AAA', 'a@m.c', '111';
+
+【changePassword(username, oldpwd, newpwd)】
+USE XYZShopping;
+DROP PROC dbo.changePassword;
+GO
+CREATE PROC dbo.changePassword
+@username nchar(10), @oldpwd nchar(10), @newpwd nchar(10)
+AS
+IF EXISTS ( SELECT * FROM dbo.users
+            WHERE username = @username
+            AND password = @oldpwd )
+				UPDATE dbo.users
+				SET password = @newpwd
+				WHERE username = @username;
+测试：EXEC XYZShopping.dbo.changePassword 'bbb', 222, 2222;
+
+【getUser(username)】
+USE XYZShopping;
+--DROP PROC dbo.getUser;
+GO
+CREATE PROC dbo.getUser
+@username nchar(10)
+AS
+SELECT *
+FROM dbo.users u
+WHERE u.username = @username;
+测试：EXEC XYZShopping.dbo.getUser 'aaa';
+
+【getPrice(id)】
+USE XYZShopping;
+DROP PROC dbo.getPrice;
+GO
+CREATE PROC dbo.getPrice
+@id int
+AS
+SELECT p.price
+FROM dbo.products p
+WHERE p.id = @id;
+测试：EXEC XYZShopping.dbo.getPrice 897003;
+
+【viewCart(email, id)】
+USE XYZShopping;
+DROP PROC dbo.viewCart;
+GO
+CREATE PROC dbo.viewCart
+@email nchar(10), @total float output
+AS
+BEGIN
+SET @total=(
+	SELECT sum(p.price*c.pcount)
+	FROM dbo.products p, dbo.cart c
+	WHERE p.id = c.id
+	AND c.email = @email
+)
+SELECT p.title, p.summary, p.image, p.price, c.pcount, p.id, @total
+FROM dbo.products p, dbo.cart c
+WHERE p.id = c.id
+AND c.email = @email;
+END
+测试：
+DECLARE @totalprice float;
+EXEC XYZShopping.dbo.viewCart 'a@m.c',@totalprice output;
+SELECT @totalprice;
+
+【viewCart(email, id)】NO OUTPUT
+USE XYZShopping;
+DROP PROC dbo.viewCart;
+GO
+CREATE PROC dbo.viewCart
+@email nchar(10)
+AS
+BEGIN
+DECLARE @total float
+SET @total=(
+	SELECT sum(p.price*c.pcount)
+	FROM dbo.products p, dbo.cart c
+	WHERE p.id = c.id
+	AND c.email = @email
+)
+SELECT p.title, p.summary, p.image, p.price, c.pcount, p.id, @total
+FROM dbo.products p, dbo.cart c
+WHERE p.id = c.id
+AND c.email = @email;
+END
+测试：
+DECLARE @totalprice float;
+EXEC XYZShopping.dbo.viewCart 'a@m.c',@totalprice output;
+SELECT @totalprice;
+
+【addCart(email, id, pcount)】
+USE XYZShopping;
+DROP PROC dbo.addCart;
+GO
+CREATE PROC dbo.addCart
+@email nchar(10), @id int, @pcount int
+AS
+BEGIN
+DECLARE @available int
+SET @available=(
+	SELECT p.available
+	FROM dbo.products p
+	WHERE p.id = @id
+)
+IF @available < @pcount
+	SET @pcount = @available;
+IF EXISTS ( SELECT * FROM dbo.cart
+            WHERE email = @email
+            AND id = @id )
+				UPDATE dbo.cart
+				SET pcount = pcount + @pcount
+				WHERE email = @email
+				AND id = @id;
+ELSE
+	INSERT INTO dbo.cart
+	VALUES (
+		@email,
+		@id,
+		@pcount);
+END
+测试：EXEC XYZShopping.dbo.addCart 'b@m.c', 897004, 1;
+EXEC XYZShopping.dbo.addCart 'd@m.c', 897007, 4; --Exceed Available！
+
+【editCart(email, id, pcount)】
+USE XYZShopping;
+DROP PROC dbo.editCart;
+GO
+CREATE PROC dbo.editCart
+@email nchar(10), @id int, @pcount int
+AS
+BEGIN
+DECLARE @available int
+SET @available=(
+	SELECT p.available
+	FROM dbo.products p
+	WHERE p.id = @id
+)
+IF @pcount > @available
+	SET @pcount = @available;
+IF EXISTS ( SELECT * FROM dbo.cart
+            WHERE email = @email
+            AND id = @id )
+				UPDATE dbo.cart
+				SET pcount = @pcount
+				WHERE email = @email
+				AND id = @id;
+ELSE
+	INSERT INTO dbo.cart
+	VALUES (
+		@email,
+		@id,
+		@pcount);
+END
+测试：EXEC XYZShopping.dbo.editCart 'c@m.c', 897001, 10;
+
+【deleteCart(email, id)】
+USE XYZShopping;
+DROP PROC dbo.deleteCart;
+GO
+CREATE PROC dbo.deleteCart
+@email nchar(10), @id int
+AS
+IF EXISTS ( SELECT * FROM dbo.cart
+            WHERE email = @email
+            AND id = @id )
+				DELETE dbo.cart
+				WHERE email = @email
+				AND id = @id;
+测试：EXEC XYZShopping.dbo.deleteCart 'c@m.c', 897001;
+
+【addOrder(email, id, pcount, orderid, address, delivered, cardnum, arrive, total)】
+USE XYZShopping;
+DROP PROC dbo.addOrder;
+GO
+CREATE PROC dbo.addOrder
+@email nchar(10), @orderid int, @address nvarchar(max), @cardnum real
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @pid int
+    DECLARE @count int
+    DECLARE @pcount int
+    DECLARE @available int
+    DECLARE @price float
+    DECLARE @result float
+    SET @count = 0
+    SET @result = 0
+    SELECT @count = count(*) FROM dbo.cart c WHERE c.email = @email
+	WHILE @count > 0
+	BEGIN
+		SELECT TOP 1 @pid = c.id, @pcount = c.pcount FROM dbo.cart c WHERE c.email = @email
+		SELECT @price = p.price, @available = p.available FROM dbo.products p WHERE p.id = @pid
+		IF (@available >= @pcount)
+		BEGIN
+			INSERT INTO dbo.ordered VALUES 
+			(@email,@pid,@pcount,@orderid,@address,0,@cardnum,'two days',cast(@pcount as decimal(10, 2))*@price);
+			SET @result = @result + cast(@pcount as decimal(10, 2))*@price;
+			DELETE FROM dbo.cart WHERE dbo.cart.email = @email AND dbo.cart.id = @pid;
+			UPDATE dbo.products SET available = available - @pcount WHERE id = @pid;
+			SET @orderid = @orderid + 1;
+			SET @count = @count - 1;
+		END
+		ELSE
+		BEGIN
+			DELETE FROM dbo.cart WHERE dbo.cart.email = @email AND dbo.cart.id = @pid;
+			INSERT INTO dbo.cart VALUES (@email,@pid,@pcount);
+			SET @count = @count - 1;
+		END
+    END
+END
+测试：EXEC XYZShopping.dbo.addOrder 'b@m.c', 2100, 'Main Street NO.43', 4111111111111111;
+EXEC XYZShopping.dbo.addOrder 'd@m.c', 2200, 'Main Street NO.45', 4111111111111111;
+
+【viewOrder(email)】
+USE XYZShopping;
+--DROP PROC dbo.viewOrder;
+GO
+CREATE PROC dbo.viewOrder
+@email nchar(10)
+AS
+SELECT o.id, o.pcount, o.orderid, o.address, o.delivered, o.cardnum, o.arrive, o.total
+FROM dbo.ordered o
+WHERE o.email = @email;
+测试：EXEC XYZShopping.dbo.viewOrder 'e@m.c';
+
+【addProduct(id, title, available, price, image, summary, details)】
+USE XYZShopping;
+--DROP PROC dbo.addProduct;
+GO
+CREATE PROC dbo.addProduct --All inputs should NOT be empty
+@id int, @title nchar(10), @available int, @price float, 
+@image nvarchar(max), @summary nvarchar(max), @details nvarchar(max)
+AS
+IF EXISTS ( SELECT * FROM dbo.products
+            WHERE id = @id )
+				UPDATE dbo.products
+				SET available = available + @available,
+					title = @title,
+					price = @price,
+					image = @image,
+					summary = @summary,
+					details = @details
+				WHERE id = @id;
+ELSE
+	INSERT INTO dbo.products
+	VALUES (
+		@id,
+		@title,
+		@available,
+		@price,
+		@image,
+		@summary,
+		@details );
+测试：EXEC XYZShopping.dbo.addProduct 897008, 'book08', 1, 19.53, 'http://ecx.images-amazon.com/images/I/51mSvtVue4L._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg', 'Professional iPhone and iPad Database Application Programming', 'An enormous demand exists for getting iPhone applications into the enterprise and this book guides you through all the necessary steps for integrating an iPhone app within an existing enterprise. Experienced iPhone developers will learn how to take advantage of the built-in capabilities of the iPhone to confidently implement a data-driven application for the iPhone.';
+
+【viewProduct(id)】
+USE XYZShopping;
+--DROP PROC dbo.viewProduct;
+GO
+CREATE PROC dbo.viewProduct
+@id int
+AS
+SELECT *
+FROM dbo.products p
+WHERE p.id = @id;
+测试：EXEC XYZShopping.dbo.viewProduct 897007;
+
+【viewAllProduct()】
+USE XYZShopping;
+--DROP PROC dbo.viewAllProduct;
+GO
+CREATE PROC dbo.viewAllProduct
+AS
+SELECT *
+FROM dbo.products;
+测试：EXEC XYZShopping.dbo.viewAllProduct;
+
+【deleteProduct(id)】
+USE XYZShopping;
+--DROP PROC dbo.deleteProduct;
+GO
+CREATE PROC dbo.deleteProduct
+@id int
+AS
+IF EXISTS ( SELECT * FROM dbo.products p
+            WHERE p.id = @id )
+				DELETE dbo.products
+				WHERE id = @id;
+测试：EXEC XYZShopping.dbo.deleteProduct 897009;
+
+
+
+【建表】
+USE XYZShopping
+DROP TABLE dbo.cart
+CREATE TABLE dbo.cart
+(
+	email nchar(10) NOT NULL,
+	id int NOT NULL,
+	pcount int NOT NULL,
+)
+
+USE XYZShopping
+DROP TABLE dbo.ordered
+CREATE TABLE dbo.ordered
+(
+	email nchar(10) NOT NULL,
+	id int NOT NULL,
+	pcount int NOT NULL,
+	orderid int NOT NULL,
+	address nvarchar(max) NOT NULL,
+	delivered bit NOT NULL,
+	cardnum real NOT NULL,
+	arrive nchar(50) NOT NULL,
+	total float NOT NULL,
+)
+
+
+【添加数据】
+INSERT INTO cart
+VALUES ('a@m.c',897003,1);
+
+INSERT INTO ordered
+VALUES ('b@m.c',897003,1,20130101,'street one',0,4111111111111111,'2 days','32.6');
+
+INSERT INTO users
+VALUES ('aaa','a@m.c','111');
+INSERT INTO users
+VALUES ('bbb','b@m.c','222');
+INSERT INTO users
+VALUES ('ccc','c@m.c','333');
+INSERT INTO users
+VALUES ('ddd','d@m.c','444');
+INSERT INTO users
+VALUES ('eee','e@m.c','555');
+
+DELETE FROM users
+WHERE email='a@m.c';
+
+INSERT INTO products
+VALUES (897001,'book01',9,12.5,'http://ecx.images-amazon.com/images/I/51F1NVZ29jL._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg','Learn cocos2d Game Development with iOS 5','Best of all, Learn cocos2d Game Development with iOS 5 will have you making games right from the very start. It guides you step-by-step through the creation of sample games. These fun examples are modeled after popular App Store games and teach you key concepts of the cocos2d game engine and relevant tools like TexturePacker (texture atlas), PhysicsEditor (physics collision shapes), Particle Designer (particle effects), Glyph Designer (bitmap fonts), and others.');
+INSERT INTO products
+VALUES (897002,'book02',5,14.9,'http://ecx.images-amazon.com/images/I/51tbFD5V43L._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg','Sams Teach Yourself iOS 6 Application Development in 24 Hours','In just 24 sessions of one hour each, learn how to build powerful applications for today’s hottest handheld devices: the iPhone and iPad! Using this book’s straightforward, step-by-step approach, you’ll master every skill and technology you need, from setting up your iOS development environment to building great responsive user interfaces, from sensing motion to writing multitasking applications. Each lesson builds on what you’ve already learned, giving you a rock-solid foundation for real-world success!');
+INSERT INTO products
+VALUES (897003,'book03',2,32.7,'http://ecx.images-amazon.com/images/I/41uS4sXnmHL._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg','Beginning iOS 6 Development','There is coverage of brand new technologies, with chapters on storyboards and iCloud, for example, as well as significant updates to existing chapters to bring them in line with all the changes that came with the iOS 6 SDK. You will have everything you need to create your very own apps for the latest iOS devices, including the iPhone 4S, iPad 2, and the latest iPod touch. Every single sample app in the book has been rebuilt from scratch using latest Xcode and the latest 64-bit iOS 6-specific project templates and designed to take advantage of the latest Xcode features.');
+INSERT INTO products
+VALUES (897004,'book04',6,22.5,'http://ecx.images-amazon.com/images/I/41iHy74gJML._SY300_.jpg','Data Storage and Management for iOS','Core Data is intricate, powerful, necessary - and this book is your guide to harnessing its power. Core Data is Apples recommended way to persist data: it is easy to use, built-in, and integrated with iCloud. You will learn fundamental Core Data principles such as thread and memory management, and you will discover how to use Core Data in your iPhone, iPad, and OS X projects by using NSPredicate to filter data and adding iCloud to your applications.');
+INSERT INTO products
+VALUES (897005,'book05',7,16.2,'http://ecx.images-amazon.com/images/I/51esysk15lL._SX260_PJlook-inside-v2,TopRight,1,0_SH20_.jpg','iOS 6 Programming Cookbook','Overcome the vexing issues you’ll inevitably confront when creating apps for the iPhone, iPad, or iPod touch. By making use of new and revised recipes in this updated cookbook, you’ll quickly learn the steps necessary to write complete iOS apps—including ways to store and protect data, enhance and animate graphics, manage files and folders, and take advantage of Passbook.');
+INSERT INTO products
+VALUES (897006,'book06',3,35.3,'http://ecx.images-amazon.com/images/I/512v0iKi2VL._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg','Beginning iOS Game Center and Game ','Beginning iOS Game Center and Game Kit shows you how to use Game Center and Game Kit to create fun and polished games that use advanced features such as social networking and voice over IP (VoIP). Game Kit and Game Center can help you reach new customers through social interaction, so this book shows you how you can quickly add a level of polish to your app that used to take weeks of hard work and late nights. ');
+INSERT INTO products
+VALUES (897007,'book07',2,28.7,'http://ecx.images-amazon.com/images/I/512v0iKi2VL._BO2,204,203,200_PIsitb-sticker-arrow-click,TopRight,35,-76_AA300_SH20_OU01_.jpg','Pro iOS 5 Augmented Reality','Pro iOS 5 Augmented Reality walks you through the foundations of building an augmented reality application for the iPhone or iPad. From using MapKit, to the accelerometer and magnetometer, to integrating facial recognition and Facebook data, you will learn the building blocks of creating augmented reality applications. Case studies are included in this one-of-a-kind book and you will learn how to create augmented reality apps that unleash the full potential of the on-board sensors and camera. This book complements other iOS game or social media apps development books available from Apress. ');
+
+
+
+
+
+
+
+
+
+
+
+
+定义stored procedure方法：
+CREATE PROCEDURE uspGetAddress @City nvarchar(30) = NULL, @AddressLine1 nvarchar(60) = NULL
+AS
+SELECT *
+FROM AdventureWorks.Person.Address
+WHERE City = ISNULL(@City,City)
+AND AddressLine1 LIKE '%' + ISNULL(@AddressLine1 ,AddressLine1) + '%'
+GO
+
+
+
+
+
+调用Stored Procedure方法：
+SqlConnection conn = null;
+SqlDataReader rdr  = null;
+conn = new SqlConnection("Server=(local);DataBase=Northwind;Integrated Security=SSPI");
+conn.Open();
+
+            // 1.  create a command object identifying the stored procedure
+SqlCommand cmd  = new SqlCommand("CustOrderHist", conn);
+
+            // 2. set the command object so it knows to execute a stored procedure
+cmd.CommandType = CommandType.StoredProcedure;
+
+            // 3. add parameter to command, which will be passed to the stored procedure
+cmd.Parameters.Add(new SqlParameter("@CustomerID", custId));
+
+            // execute the command
+rdr = cmd.ExecuteReader();
+
+            // iterate through results, printing each to console
+while (rdr.Read())
+{
+    Console.WriteLine("Product: {0,-35} Total: {1,2}",rdr["ProductName"],rdr["Total"]);
+}
+
+
+
+获取Return返回值
+ 程序代码
+//存储过程
+//Create PROCEDURE MYSQL
+//     @a int,
+//     @b int
+//AS
+//     return @a + @b
+//GO
+SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["LocalSqlServer"].ToString());
+conn.Open();
+SqlCommand MyCommand = new SqlCommand("MYSQL", conn);
+MyCommand.CommandType = CommandType.StoredProcedure;
+MyCommand.Parameters.Add(new SqlParameter("@a", SqlDbType.Int));
+MyCommand.Parameters["@a"].Value = 10;
+MyCommand.Parameters.Add(new SqlParameter("@b", SqlDbType.Int));
+MyCommand.Parameters["@b"].Value = 20;
+MyCommand.Parameters.Add(new SqlParameter("@return", SqlDbType.Int));
+MyCommand.Parameters["@return"].Direction = ParameterDirection.ReturnValue;
+MyCommand.ExecuteNonQuery();
+Response.Write(MyCommand.Parameters["@return"].Value.ToString());
+
+【获取Output输出参数值】
+程序代码
+//存储过程
+//Create PROCEDURE MYSQL
+//     @a int,
+//     @b int,
+//     @c int output
+//AS
+//     Set @c = @a + @b
+//GO
+SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["LocalSqlServer"].ToString());
+conn.Open();
+SqlCommand MyCommand = new SqlCommand("MYSQL", conn);
+MyCommand.CommandType = CommandType.StoredProcedure;
+MyCommand.Parameters.Add(new SqlParameter("@a", SqlDbType.Int));
+MyCommand.Parameters["@a"].Value = 20;
+MyCommand.Parameters.Add(new SqlParameter("@b", SqlDbType.Int));
+MyCommand.Parameters["@b"].Value = 20;
+MyCommand.Parameters.Add(new SqlParameter("@c", SqlDbType.Int));
+MyCommand.Parameters["@c"].Direction = ParameterDirection.Output;
+MyCommand.ExecuteNonQuery();
+Response.Write(MyCommand.Parameters["@c"].Value.ToString());
+
+http://blog.csdn.net/wangyadong99/article/details/7866194
+
+【若操作未成功则rollback】

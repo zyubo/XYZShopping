@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?><Database Name="XYZShopping" Class="DataClasses1DataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="WebSettings" ConnectionString="Data Source=ZHANG-THINK;Initial Catalog=XYZShopping;Integrated Security=True" SettingsObjectName="System.Configuration.ConfigurationManager.ConnectionStrings" SettingsPropertyName="XYZShoppingConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.cart" Member="cart">
+    <Type Name="cart">
+      <Column Name="email" Type="System.String" DbType="NChar(10) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="pcount" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Association Name="products_cart" Member="products" ThisKey="id" OtherKey="id" Type="products" IsForeignKey="true" />
+      <Association Name="users_cart" Member="users" ThisKey="email" OtherKey="email" Type="users" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.ordered" Member="ordered">
+    <Type Name="ordered">
+      <Column Name="email" Type="System.String" DbType="NChar(10) NOT NULL" CanBeNull="false" />
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="pcount" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="orderid" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="address" Type="System.String" DbType="NVarChar(MAX) NOT NULL" CanBeNull="false" />
+      <Column Name="delivered" Type="System.Boolean" DbType="Bit NOT NULL" CanBeNull="false" />
+      <Column Name="cardnum" Type="System.Single" DbType="Real NOT NULL" CanBeNull="false" />
+      <Column Name="arrive" Type="System.String" DbType="NChar(50) NOT NULL" CanBeNull="false" />
+      <Column Name="total" Type="System.Double" DbType="Float NOT NULL" CanBeNull="false" />
+      <Association Name="products_ordered" Member="products" ThisKey="id" OtherKey="id" Type="products" IsForeignKey="true" />
+      <Association Name="users_ordered" Member="users" ThisKey="email" OtherKey="email" Type="users" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.products" Member="products">
+    <Type Name="products">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="title" Type="System.String" DbType="NChar(10) NOT NULL" CanBeNull="false" />
+      <Column Name="available" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="price" Type="System.Double" DbType="Float NOT NULL" CanBeNull="false" />
+      <Column Name="image" Type="System.String" DbType="NVarChar(MAX) NOT NULL" CanBeNull="false" />
+      <Column Name="summary" Type="System.String" DbType="NVarChar(MAX) NOT NULL" CanBeNull="false" />
+      <Column Name="details" Type="System.String" DbType="NVarChar(MAX) NOT NULL" CanBeNull="false" />
+      <Association Name="products_cart" Member="cart" ThisKey="id" OtherKey="id" Type="cart" />
+      <Association Name="products_ordered" Member="ordered" ThisKey="id" OtherKey="id" Type="ordered" />
+    </Type>
+  </Table>
+  <Table Name="dbo.users" Member="users">
+    <Type Name="users">
+      <Column Name="username" Type="System.String" DbType="NChar(10) NOT NULL" CanBeNull="false" />
+      <Column Name="email" Type="System.String" DbType="NChar(10) NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="password" Type="System.String" DbType="NChar(10) NOT NULL" CanBeNull="false" />
+      <Association Name="users_cart" Member="cart" ThisKey="email" OtherKey="email" Type="cart" />
+      <Association Name="users_ordered" Member="ordered" ThisKey="email" OtherKey="email" Type="ordered" />
+    </Type>
+  </Table>
+</Database>

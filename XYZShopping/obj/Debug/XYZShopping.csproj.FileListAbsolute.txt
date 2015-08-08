@@ -1,0 +1,5 @@
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping\bin\XYZShopping.dll
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping\bin\XYZShopping.pdb
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping\obj\Debug\XYZShopping.dll
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping\obj\Debug\XYZShopping.pdb
+C:\Users\ZHANG\Documents\Visual Studio 2010\Projects\XYZShopping\XYZShopping\obj\Debug\XYZShopping.csprojResolveAssemblyReference.cache

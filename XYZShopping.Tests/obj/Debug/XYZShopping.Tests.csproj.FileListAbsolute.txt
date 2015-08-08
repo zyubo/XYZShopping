@@ -1,0 +1,8 @@
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\bin\Debug\XYZShopping.Tests.dll.config
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\bin\Debug\XYZShopping.Tests.dll
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\bin\Debug\XYZShopping.Tests.pdb
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\bin\Debug\XYZShopping.dll
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\bin\Debug\XYZShopping.pdb
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\obj\Debug\XYZShopping.Tests.csprojResolveAssemblyReference.cache
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\obj\Debug\XYZShopping.Tests.dll
+c:\users\zhang\documents\visual studio 2010\Projects\XYZShopping\XYZShopping.Tests\obj\Debug\XYZShopping.Tests.pdb
